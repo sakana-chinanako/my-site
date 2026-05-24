@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { loadIndex } from '../utils/index-loader.js';
+
+let docCount = 0, imgCount = 0;
+const ix = loadIndex();
+if (ix && ix.files) {
+  docCount = ix.files.filter(f => f.type === 'doc').length;
+  imgCount = ix.files.filter(f => f.type === 'image').length;
+}
+---
+<Layout title="资源站">
+  <div class="max-w-5xl mx-auto pt-6">
+    <div class="grid md:grid-cols-2 gap-3">
+      <a href="/docs" class="group flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-sm transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-gray-900 dark:text-white">文档</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 tabular">{docCount} 个文件</p>
+          </div>
+        </div>
+        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+      <a href="/images" class="group flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-sm transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-gray-900 dark:text-white">图片</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 tabular">{imgCount} 张</p>
+          </div>
+        </div>
+        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+    </div>
+    <div class="mt-4">
+      <a href="/search" class="flex items-center justify-center gap-2 w-full p-3 text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:border-gray-300 dark:hover:border-slate-600 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        搜索全部文件
+      </a>
+    </div>
+  </div>
+</Layout>

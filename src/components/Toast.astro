@@ -1,0 +1,17 @@
+<div id="toast" role="alert" aria-live="polite" class="fixed bottom-4 right-4 bg-gray-900 dark:bg-gray-100 dark:text-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 translate-y-2 transition-all duration-300 z-50 text-sm pointer-events-none">
+  提示
+</div>
+<script>
+  window.showToast = function(message, isError) {
+    var t = document.getElementById("toast"); if (!t) return;
+    t.textContent = message;
+    t.style.backgroundColor = isError ? "#dc2626" : "";
+    t.classList.add("opacity-100", "translate-y-0");
+    t.classList.remove("opacity-0", "translate-y-2", "pointer-events-none");
+    clearTimeout(window._tt);
+    window._tt = setTimeout(function() {
+      t.classList.remove("opacity-100", "translate-y-0");
+      t.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+    }, 3000);
+  };
+</script>

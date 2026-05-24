@@ -1,0 +1,97 @@
+---
+import path from 'path';
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import Toast from '../../components/Toast.astro';
+import ZipDownload from '../../components/ZipDownload.astro';
+import { loadIndex } from '../../utils/index-loader.js';
+import { getDocColor } from '../../utils/file-utils.js';
+
+export function getStaticPaths() {
+  const ix = loadIndex();
+  const paths = [];
+  if (ix && ix.files) {
+    const cats = [...new Set(ix.files.filter(f => f.type === 'doc').map(f => f.category))];
+    for (const c of cats) paths.push({ params: { category: c } });
+  }
+  return paths;
+}
+
+const { category } = Astro.params;
+const safeCat = category ? path.normalize(category) : '';
+if (!category || /[\\\/]/.test(category) || safeCat.startsWith('..') || safeCat.startsWith('/')) {
+  return new Response('Not Found', { status: 404 });
+}
+
+const files = [];
+const ix = loadIndex();
+if (ix && ix.files) {
+  const cf = ix.files.filter(f => f.type === 'doc' && f.category === category);
+  for (const f of cf) {
+    const e = '.' + f.ext;
+    const c = getDocColor(e);
+    files.push({
+      name: f.name.replace(e, ''),
+      fullName: f.name,
+      size: f.size,
+      sizeBytes: f.sizeBytes || 0,
+      ext: e,
+      colors: c,
+      path: f.path
+    });
+  }
+}
+files.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+---
+<Layout title={category + ' - 文档'}>
+  <div class="max-w-4xl mx-auto">
+    <Breadcrumb items={[{ label: '文档', href: '/docs' }, { label: category }]} />
+    <div class="mb-4 flex items-center justify-between">
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{category} <span class="text-sm font-normal text-gray-400 dark:text-gray-500 tabular">({files.length})</span></h1>
+      <div class="flex items-center gap-2">
+        <button id="select-all" class="text-xs px-3 py-1.5 rounded-md border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">全选</button>
+        <button id="download-zip" data-category={category} data-checkbox-selector=".select-checkbox" class="text-xs px-3 py-1.5 rounded-md bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>打包下载</button>
+      </div>
+    </div>
+    {files.length === 0 ? (
+      <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
+        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/></svg>
+        <p class="text-gray-400 dark:text-gray-500 text-sm">暂无文件</p>
+        <p class="text-gray-300 dark:text-gray-600 text-xs mt-1">将文件放入 public/docs/{category}/ 目录</p>
+      </div>
+    ) : (
+      <div class="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <ul class="divide-y divide-gray-100 dark:divide-slate-700">
+          {files.map(file => (
+            <li class="group flex items-center gap-3 py-2.5 px-3 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+              <input type="checkbox" class="select-checkbox w-3.5 h-3.5 rounded border-gray-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500 shrink-0" data-path={file.path} data-name={file.fullName} data-size={file.sizeBytes} />
+              <div class={"w-8 h-8 rounded flex items-center justify-center shrink-0 " + file.colors.bgClass + " " + file.colors.textClass}>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{file.name}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 tabular">{file.size}</p>
+              </div>
+              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <a href={file.path} download class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-500 dark:text-gray-400" title="下载">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                </a>
+                <a href={file.path} target="_blank" rel="noopener noreferrer" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-500 dark:text-gray-400" title="新窗口打开">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                </a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+    <div class="mt-4">
+      <a href="/docs" class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        返回
+      </a>
+    </div>
+  </div>
+  <Toast />
+  <ZipDownload />
+</Layout>

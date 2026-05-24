@@ -1,0 +1,7 @@
+dist/
+.astro/
+node_modules/
+*.log
+.DS_Store
+public/file-index.json
+.index-cache.json

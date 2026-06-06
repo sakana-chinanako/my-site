@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sakana-chinanako.pages.dev/sitemap-index.xml

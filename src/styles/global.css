@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+@import 'tailwindcss';
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --font-sans: 'Inter', 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+@layer base {
+  body {
+    background: linear-gradient(135deg, #fafaf9 0%, #f5f3ff 50%, #fafaf9 100%);
+    background-attachment: fixed;
+    color: #0f172a;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body {
+    background: linear-gradient(to bottom right, #0f172a 0%, #0f172a 60%, #1e1b4b 100%);
+  }
+
+  ::selection { background-color: var(--color-primary-100); }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  .dark ::-webkit-scrollbar-thumb { background: #475569; }
+  .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+}
+
+@layer components {
+  /* 卡片 */
+  .card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+  }
+  .card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 8px 24px rgba(99,102,241,0.08);
+    border-color: var(--color-primary-500);
+  }
+  .dark .card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .dark .card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 8px 24px rgba(99,102,241,0.12);
+  }
+
+  /* 导航栏毛玻璃 */
+  .nav-glass {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .dark .nav-glass {
+    background: rgba(15,23,42,0.85);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* 首页卡片装饰条 */
+  .card-accent {
+    position: relative;
+  }
+  .card-accent::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    border-radius: 0 2px 2px 0;
+    background: linear-gradient(to bottom, var(--color-primary-500), var(--color-primary-600));
+  }
+
+  /* 链接下划线动效 */
+  .link-underline {
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0 1px;
+    transition: background-size 0.2s ease;
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+
+  /* 搜索框光晕 */
+  .search-glow:focus {
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15), inset 0 1px 2px rgba(0,0,0,0.04);
+  }
+}

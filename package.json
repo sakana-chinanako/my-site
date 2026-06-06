@@ -1,0 +1,28 @@
+{
+  "name": "my-site",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "index": "node scripts/build-index.js",
+    "predev": "npm run index",
+    "dev": "astro dev",
+    "build": "astro build",
+    "postbuild": "npm run pagefind",
+    "pagefind": "npx pagefind --site dist",
+    "thumbnails": "node scripts/generate-thumbnails.js",
+    "prebuild": "npm run index && npm run thumbnails",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.7.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@astrojs/sitemap": "^3.3.0",
+    "tailwindcss": "^4.1.0",
+    "pdf-parse": "^1.1.1",
+    "marked": "^15.0.0",
+    "sharp": "^0.33.0",
+    "pagefind": "^1.3.0",
+    "jszip": "^3.10.1",
+    "file-saver": "^2.0.5"
+  }
+}

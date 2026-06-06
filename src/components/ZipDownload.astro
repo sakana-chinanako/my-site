@@ -1,0 +1,98 @@
+<script>// @ts-nocheck
+(function(){
+if (typeof window === "undefined") return;
+var sA = document.getElementById("select-all"), dB = document.getElementById("download-zip");
+if (!sA || !dB) return;
+var cs = dB.dataset.checkboxSelector || ".select-checkbox", cat = dB.dataset.category || "files";
+function gC() { return document.querySelectorAll(cs); }
+function sT(m, e) { if (typeof window.showToast === "function") window.showToast(m, e); }
+function uB() {
+  var c = document.querySelectorAll(cs + ":checked"), all = gC();
+  dB.disabled = c.length === 0;
+  dB.textContent = c.length > 0 ? "打包下载 (" + c.length + ")" : "打包下载";
+  sA.textContent = c.length === all.length && all.length > 0 ? "取消全选" : "全选";
+}
+sA.addEventListener("click", function() {
+  var c = gC(), a = Array.from(c).every(function(x) { return x.checked; });
+  c.forEach(function(x) { x.checked = !a; });
+  sA.textContent = !a ? "取消全选" : "全选";
+  uB();
+});
+document.addEventListener("change", function(e) { if (e.target.matches(cs)) uB(); });
+dB.addEventListener("click", async function() {
+  var JSZip = (await import("jszip")).default;
+  var fsModule = await import("file-saver");
+  var saveAs = fsModule.saveAs || fsModule.default?.saveAs;
+  if (!saveAs) { sT("打包组件加载失败", true); return; }
+  var c = document.querySelectorAll(cs + ":checked");
+  if (c.length === 0) return;
+  var LIMIT = 80 * 1024 * 1024, CC = 4, MR = 2;
+  var items = Array.from(c).map(function(x) {
+    return { url: new URL(x.dataset.path, window.location.href).href, name: x.dataset.name, size: parseInt(x.dataset.size || '0', 10) };
+  });
+  // 检查单文件超限
+  var oversized = items.filter(function(it) { return it.size > LIMIT; });
+  if (oversized.length > 0) {
+    sT("存在超过 80MB 的文件无法打包: " + oversized[0].name, true);
+    return;
+  }
+  var cM = 0, cF = [], fP = 0, tS = 0, tF = 0, iM = false;
+  sT("正在分批打包，请稍候...");
+  var pB = document.createElement("div");
+  pB.id = "zip-progress-bar";
+  pB.className = "fixed top-0 left-0 h-1 bg-primary-500 transition-all duration-300 z-100 rounded-r";
+  pB.style.width = "0%";
+  document.body.appendChild(pB);
+  var uPr = function(d, t) { pB.style.width = Math.round((d / t) * 100) + "%"; };
+  async function fZ() {
+    if (cF.length === 0) return;
+    var z = new JSZip(), f = z.folder(cat);
+    for (var i = 0; i < cF.length; i++) f.file(cF[i].name, cF[i].blob);
+    try {
+      var bc = await z.generateAsync({ type: "blob", streamFiles: true });
+      fP++;
+      var fn = iM ? cat + "_part" + fP + ".zip" : cat + ".zip";
+      saveAs(bc, fn);
+    } catch (e) {
+      console.error("打包失败:", e);
+      tF += cF.length;
+      sT("分卷打包失败: " + e.message, true);
+    }
+    cF = []; cM = 0;
+  }
+  async function fR(url, retries) {
+    retries = retries || MR;
+    for (var a = 0; a <= retries; a++) {
+      try {
+        var r = await fetch(url);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return { ok: true, blob: await r.blob() };
+      } catch (er) {
+        if (a === retries) return { ok: false, error: er };
+        await new Promise(function(rs) { setTimeout(rs, 1000 * Math.pow(2, a)); });
+      }
+    }
+  }
+  var done = 0, total = items.length;
+  for (var i = 0; i < items.length; i += CC) {
+    var batch = items.slice(i, i + CC);
+    var results = await Promise.all(batch.map(async function(item) {
+      var r = await fR(item.url);
+      return { rr: r, item: item };
+    }));
+    for (var j = 0; j < results.length; j++) {
+      var rr = results[j]; done++; uPr(done, total);
+      if (!rr.rr.ok) { tF++; console.error("下载失败:", rr.item.name, rr.rr.error); continue; }
+      tS++;
+      if (cM + rr.rr.blob.size > LIMIT && cF.length > 0) { iM = true; await fZ(); }
+      cF.push({ name: rr.item.name, blob: rr.rr.blob });
+      cM += rr.rr.blob.size;
+    }
+  }
+  if (cF.length > 0) { if (fP > 0) iM = true; await fZ(); }
+  setTimeout(function() { pB.remove(); }, 500);
+  if (tS === 0) { sT("所有文件下载失败！", true); return; }
+  var msg = "打包完成！成功: " + tS + " 个" + (tF > 0 ? "，失败: " + tF + " 个" : "") + (fP > 1 ? "，共 " + fP + " 个分卷" : "");
+  sT(msg);
+});
+})();</script>

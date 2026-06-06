@@ -1,0 +1,4 @@
+使用说明：
+1. 将文档放入 public/docs 对应分类文件夹
+2. 将图片放入 public/images 对应分类文件夹
+3. 运行 npm run dev 启动开发服务器

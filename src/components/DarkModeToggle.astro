@@ -1,0 +1,25 @@
+<button id="darkmode-toggle" class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-all" aria-label="切换暗色模式" title="切换暗色/亮色模式">
+  <svg id="dm-sun" class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  <svg id="dm-moon" class="w-4 h-4 hidden transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+</button>
+<script>// @ts-nocheck
+(function(){
+var b = document.getElementById("darkmode-toggle"), s = document.getElementById("dm-sun"), m = document.getElementById("dm-moon");
+if (!b) return;
+function setD(d) {
+  document.documentElement.classList.toggle("dark", d);
+  if (d) { s.classList.add("hidden"); m.classList.remove("hidden"); m.style.transform = "rotate(0deg)"; }
+  else { m.classList.add("hidden"); s.classList.remove("hidden"); s.style.transform = "rotate(0deg)"; }
+  try { localStorage.setItem("theme", d ? "dark" : "light"); } catch (e) {}
+}
+var st = null;
+try { st = localStorage.getItem("theme"); } catch (e) {}
+if (st === "dark" || st === "light") setD(st === "dark");
+else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setD(true);
+b.addEventListener("click", function() {
+  var d = document.documentElement.classList.contains("dark");
+  var el = d ? m : s;
+  el.style.transform = "rotate(90deg)";
+  setTimeout(function() { setD(!d); }, 150);
+});
+})();</script>

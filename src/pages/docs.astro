@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { loadIndex } from '../utils/index-loader.js';
+
+const categories = [];
+const ix = loadIndex();
+if (ix && ix.files) {
+  const df = ix.files.filter(f => f.type === 'doc');
+  const cm = new Map();
+  for (const f of df) {
+    cm.set(f.category, (cm.get(f.category) || 0) + 1);
+  }
+  for (const [n, c] of cm) {
+    categories.push({ name: n, count: c, path: '/docs/' + encodeURIComponent(n) });
+  }
+}
+---
+<Layout title="文档 - lycoris">
+  <div class="max-w-5xl mx-auto">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">文档</h1>
+    </div>
+    {categories.length === 0 ? (
+      <div class="card text-center py-16">
+        <svg class="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+        <p class="text-gray-400 dark:text-gray-500 text-sm">暂无文档分类</p>
+        <p class="text-gray-400 dark:text-gray-600 text-xs mt-1">将文档放入 public/docs/ 下的对应目录</p>
+      </div>
+    ) : (
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {categories.map(cat => (
+          <a href={cat.path} class="card p-5 flex items-center justify-between group">
+            <div class="flex items-center gap-3 min-w-0">
+              <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+              <span class="font-medium text-sm text-gray-900 dark:text-white truncate">{cat.name}</span>
+            </div>
+            <span class="text-xs text-gray-400 dark:text-gray-500 tabular shrink-0 ml-2">{cat.count}</span>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</Layout>

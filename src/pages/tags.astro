@@ -1,0 +1,48 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { loadIndex } from '../utils/index-loader.js';
+
+const tagMap = new Map();
+const ix = loadIndex();
+if (ix && ix.files) {
+  for (const f of ix.files) {
+    if (f.tags && Array.isArray(f.tags)) {
+      for (const t of f.tags) {
+        tagMap.set(t, (tagMap.get(t) || 0) + 1);
+      }
+    }
+  }
+}
+const tags = [...tagMap.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, count]) => ({ name, count }));
+
+const maxCount = tags.length > 0 ? tags[0].count : 1;
+---
+<Layout title="标签">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">标签</h1>
+    </div>
+    {tags.length === 0 ? (
+      <div class="card text-center py-16">
+        <svg class="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        <p class="text-gray-400 dark:text-gray-500 text-sm">暂无标签</p>
+        <p class="text-gray-400 dark:text-gray-600 text-xs mt-1">为文件添加同名 .json 侧车来设置标签</p>
+      </div>
+    ) : (
+      <div class="card p-6 flex flex-wrap gap-3 justify-center">
+        {tags.map(tag => {
+          const size = 14 + ((tag.count / maxCount) * 22);
+          return (
+            <a href={'/tags/' + encodeURIComponent(tag.name)} class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-slate-700/50 hover:bg-primary-50 dark:hover:bg-primary-900/30 text-gray-700 dark:text-gray-300 hover:text-primary-700 dark:hover:text-primary-300 transition-colors" style={'font-size:' + size + 'px'}>
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+              {tag.name}
+              <span class="tabular text-xs opacity-50">({tag.count})</span>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</Layout>

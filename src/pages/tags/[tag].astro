@@ -1,0 +1,93 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import { loadIndex } from '../../utils/index-loader.js';
+import { getDocColor } from '../../utils/file-utils.js';
+
+export function getStaticPaths() {
+  const ix = loadIndex();
+  const tags = new Set();
+  if (ix && ix.files) {
+    for (const f of ix.files) {
+      if (f.tags && Array.isArray(f.tags)) {
+        for (const t of f.tags) tags.add(t);
+      }
+    }
+  }
+  return [...tags].map(t => ({ params: { tag: t } }));
+}
+
+const { tag } = Astro.params;
+const ix = loadIndex();
+const files = (ix?.files || []).filter(f => f.tags && Array.isArray(f.tags) && f.tags.includes(tag as string));
+const docs = files.filter(f => f.type === 'doc');
+const images = files.filter(f => f.type === 'image');
+---
+<Layout title={tag + ' - 标签'}>
+  <div class="max-w-4xl mx-auto">
+    <Breadcrumb items={[{ label: '标签', href: '/tags' }, { label: tag as string }]} />
+    <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
+      <span class="inline-flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        {tag}
+      </span>
+      <span class="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2 tabular">({files.length})</span>
+    </h1>
+    {files.length === 0 ? (
+      <div class="card text-center py-16">
+        <svg class="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+        <p class="text-gray-400 dark:text-gray-500 text-sm">暂无关联文件</p>
+      </div>
+    ) : (
+      <>
+        {docs.length > 0 && (
+          <div class="mb-6">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">文档 ({docs.length})</h2>
+            <div class="card overflow-hidden">
+              <ul class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                {docs.map(f => {
+                  const e = '.' + f.ext;
+                  const c = getDocColor(e);
+                  return (
+                    <li class="group flex items-center gap-3 py-3 px-4 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                      <div class={"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 " + c.bgClass + " " + c.textClass}>
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <a href={f.path} target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 truncate block">{f.name}</a>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 tabular">{f.category} · {f.size}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+        {images.length > 0 && (
+          <div class="mb-6">
+            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">图片 ({images.length})</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {images.map(img => (
+                <a href={img.path} target="_blank" rel="noopener noreferrer" class="card overflow-hidden group">
+                  <div class="aspect-square bg-gray-100 dark:bg-slate-700 overflow-hidden">
+                    <img src={img.path} alt={img.name} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  </div>
+                  <div class="p-2">
+                    <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{img.name}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    )}
+    <div class="mt-4">
+      <a href="/tags" class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 link-underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        所有标签
+      </a>
+    </div>
+  </div>
+</Layout>

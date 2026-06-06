@@ -1,0 +1,114 @@
+---
+import fs from 'fs';
+import path from 'path';
+import { marked } from 'marked';
+import Layout from '../../../layouts/Layout.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import { loadIndex } from '../../../utils/index-loader.js';
+
+export function getStaticPaths() {
+  const ix = loadIndex();
+  const paths = [];
+  if (ix && ix.files) {
+    const docs = ix.files.filter(f => f.type === 'doc' && ['.md','.txt'].some(e => f.name.toLowerCase().endsWith(e)));
+    for (const d of docs) {
+      const ext = ['.md','.txt'].find(e => d.name.toLowerCase().endsWith(e)) || '';
+      const slug = d.name.replace(new RegExp(ext.replace('.','\\.') + '$', 'i'), '');
+      paths.push({ params: { category: d.category, slug } });
+    }
+  }
+  return paths;
+}
+
+const { category, slug } = Astro.params;
+const ix = loadIndex();
+const validCats = new Set(ix?.files?.filter(f => f.type === 'doc').map(f => f.category) || []);
+if (!category || !slug || !validCats.has(category) || /[\\\\/]/.test(category) || /[\\\\/]/.test(slug)) {
+  return new Response('Not Found', { status: 404 });
+}
+
+// 查找文件
+const ext = ['.md','.txt'].find(e => {
+  const fp = path.join(process.cwd(), 'public', 'docs', category, slug + e);
+  return fs.existsSync(fp);
+});
+if (!ext) return new Response('Not Found', { status: 404 });
+
+const fp = path.join(process.cwd(), 'public', 'docs', category, slug + ext);
+const raw = fs.readFileSync(fp, 'utf-8');
+const htmlContent = marked.parse(raw);
+
+// 给标题加 id
+let idx = 0;
+const tocItems = [];
+const processedHtml = htmlContent.replace(/<h([1-4])([^>]*)>(.*?)<\/h\1>/g, (full, level, attrs, text) => {
+  const id = 'h-' + (idx++);
+  tocItems.push({ level: parseInt(level), id, text: text.replace(/<[^>]*>/g, '') });
+  return '<h' + level + attrs + ' id="' + id + '">' + text + '</h' + level + '>';
+});
+
+const tocHtml = tocItems.map(item => {
+  const indent = (item.level - 1) * 16;
+  return '<a href="#' + item.id + '" class="toc-link block text-sm py-1 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate" style="padding-left:' + indent + 'px" data-target="' + item.id + '">' + item.text + '</a>';
+}).join('');
+
+const navTitle = ix?.files.find(f => f.category === category && f.name === slug + ext)?.name || slug;
+---
+<Layout title={navTitle + ' - 文档'}>
+  <div class="max-w-6xl mx-auto">
+    <Breadcrumb items={[{ label: '文档', href: '/docs' }, { label: category as string, href: '/docs/' + encodeURIComponent(category as string) }, { label: navTitle }]} />
+    <div class="flex gap-8">
+      <article class="flex-1 min-w-0 card p-8">
+        <div class="prose prose-slate dark:prose-invert max-w-none
+          prose-headings:font-bold prose-headings:tracking-tight
+          prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+          prose-p:leading-relaxed prose-a:text-primary-600
+          prose-code:bg-gray-100 dark:prose-code:bg-slate-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+          prose-pre:bg-gray-900 dark:prose-pre:bg-slate-950 prose-pre:rounded-xl
+          prose-img:rounded-xl
+          [&_h1]:scroll-mt-20 [&_h2]:scroll-mt-20 [&_h3]:scroll-mt-20 [&_h4]:scroll-mt-20
+        " set:html={processedHtml} />
+      </article>
+      {tocItems.length > 0 && (
+        <aside class="hidden lg:block w-56 shrink-0">
+          <div class="sticky top-20">
+            <h4 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">目录</h4>
+            <nav class="space-y-0.5 border-l-2 border-gray-100 dark:border-slate-700 pl-3" id="toc-nav" set:html={tocHtml}>
+            </nav>
+          </div>
+        </aside>
+      )}
+    </div>
+    <div class="mt-6">
+      <a href={'/docs/' + encodeURIComponent(category as string)} class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 link-underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        返回 {category}
+      </a>
+    </div>
+  </div>
+  <script>// @ts-nocheck
+  (function(){
+    var links = document.querySelectorAll(".toc-link");
+    if (!links.length) return;
+    function updateActive() {
+      var current = "";
+      links.forEach(function(a) {
+        var el = document.getElementById(a.dataset.target);
+        if (el && el.getBoundingClientRect().top < 120) current = a.dataset.target;
+      });
+      links.forEach(function(a) {
+        if (a.dataset.target === current) { a.classList.add("text-primary-600","dark:text-primary-400","font-medium"); }
+        else { a.classList.remove("text-primary-600","dark:text-primary-400","font-medium"); }
+      });
+    }
+    window.addEventListener("scroll", updateActive, { passive: true });
+    updateActive();
+    links.forEach(function(a) {
+      a.addEventListener("click", function(e) {
+        e.preventDefault();
+        var el = document.getElementById(a.dataset.target);
+        if (el) { var top = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: top, behavior: "smooth" }); }
+      });
+    });
+  })();</script>
+</Layout>
